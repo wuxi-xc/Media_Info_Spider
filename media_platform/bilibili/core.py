@@ -13,7 +13,7 @@ from playwright.async_api import (BrowserContext, BrowserType, Page,
                                   async_playwright)
 
 import config
-from base.base_crawler import AbstractCrawler
+from base.base import AbstractCrawler
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import bilibili as bilibili_store
 from tools import utils
@@ -119,7 +119,7 @@ class BilibiliCrawler(AbstractCrawler):
                         await bilibili_store.update_bilibili_video(video_item)
 
                 if config.ENABLE_REPORT:
-                    result = await self.bili_client.report_video(aid="1954748279")
+                    result = await self.bili_client.report_video(aid="1754979870") #BV1pt421T7Dy
                     print(result)
                 page += 1
                 utils.logger.info(f"[BilibiliCrawler.search] keyword:{keyword}, video_list:{video_id_list}")

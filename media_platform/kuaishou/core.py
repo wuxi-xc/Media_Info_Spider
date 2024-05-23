@@ -9,7 +9,7 @@ from playwright.async_api import (BrowserContext, BrowserType, Page,
                                   async_playwright)
 
 import config
-from base.base_crawler import AbstractCrawler
+from base.base import AbstractCrawler
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import kuaishou as kuaishou_store
 from tools import utils

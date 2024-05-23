@@ -11,7 +11,9 @@ import httpx
 import config
 from tools import utils
 
-from proxy import IpGetError, IpInfoModel, ProxyProvider, RedisDbIpCache
+from proxy.types import IpInfoModel
+from proxy.exception import IpGetError
+from base.base import ProxyProvider
 
 
 class KuaiDaiLiProxy(ProxyProvider):
@@ -35,14 +37,6 @@ class KuaiDaiLiProxy(ProxyProvider):
         :param num:
         :return:
         """
-
-        # # 优先从缓存中拿 IP
-        # ip_cache_list = self.ip_cache.load_all_ip(proxy_brand_name=self.proxy_brand_name)
-        # if len(ip_cache_list) >= num:
-        #     return ip_cache_list[:num]
-        #
-        # # 如果缓存中的数量不够，从IP代理商获取补上，再存入缓存中
-        # need_get_count = num - len(ip_cache_list)
         self.params.update({"num": num})
         ip_infos = []
         async with httpx.AsyncClient() as client:

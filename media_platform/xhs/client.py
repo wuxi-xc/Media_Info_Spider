@@ -8,7 +8,7 @@ import httpx
 
 from playwright.async_api import BrowserContext, Page, TimeoutError
 
-from base.base_crawler import AbstactApiClient
+from base.base import AbstactApiClient
 from tools import utils
 
 from .exception import DataFetchError, IPBlockError

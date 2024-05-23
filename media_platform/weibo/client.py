@@ -14,12 +14,14 @@ from urllib.parse import urlencode
 import httpx
 from playwright.async_api import BrowserContext, Page, TimeoutError
 
+
+from base.base import AbstactApiClient
 from tools import utils
 from .exception import DataFetchError
 from .field import SearchType
 
 
-class WeiboClient:
+class WeiboClient(AbstactApiClient):
     def __init__(
             self,
             timeout=10,
@@ -136,8 +138,6 @@ class WeiboClient:
         :return:
         """
         headers = await self.pre_report(note_id)
-
-        print(f"headers: {headers}")
         rnd = int(datetime.datetime.now().timestamp() * 1000)
         uri = "https://service.account.weibo.com/aj/reportspamobile?__rnd=" + str(rnd)
         data = {

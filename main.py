@@ -4,7 +4,7 @@ import sys
 
 import config
 import db
-from base.base_crawler import AbstractCrawler
+from base.base import AbstractCrawler
 from media_platform.bilibili import BilibiliCrawler
 from media_platform.douyin import DouYinCrawler
 from media_platform.kuaishou import KuaishouCrawler
@@ -16,9 +16,9 @@ class CrawlerFactory:
 
     CRAWLERS = {
         "xhs": XiaoHongShuCrawler,
-        "dy": DouYinCrawler,
-        "ks": KuaishouCrawler,
-        "bili": BilibiliCrawler,
+        "douyin": DouYinCrawler,
+        "kuaishou": KuaishouCrawler,
+        "bilibili": BilibiliCrawler,
         "wb": WeiboCrawler
     }
 

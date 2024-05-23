@@ -8,7 +8,7 @@ from playwright.async_api import (BrowserContext, BrowserType, Page,
                                   async_playwright)
 
 import config
-from base.base_crawler import AbstractCrawler
+from base.base import AbstractCrawler
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import xhs as xhs_store
 from tools import utils
@@ -69,8 +69,9 @@ class XiaoHongShuCrawler(AbstractCrawler):
             # 创建一个小红书客户端来与小红书进行交互
             self.xhs_client = await self.create_xhs_client(httpx_proxy_format)
 
-            # 检查是否登录成功，如果没有登录信息则需要重新进行登录
             await utils.correct_angle(self.context_page)
+
+            # 检查是否登录成功，如果没有登录信息则需要重新进行登录
             if not await self.xhs_client.pong():
                 login_obj = XiaoHongShuLogin(
                     login_type=self.login_type,
@@ -82,6 +83,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await login_obj.begin()
                 await self.xhs_client.update_cookies(browser_context=self.browser_context)
 
+            print("222")
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":

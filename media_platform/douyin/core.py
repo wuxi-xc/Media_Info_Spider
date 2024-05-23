@@ -8,7 +8,7 @@ from playwright.async_api import (BrowserContext, BrowserType, Page,
                                   async_playwright)
 
 import config
-from base.base_crawler import AbstractCrawler
+from base.base import AbstractCrawler
 from proxy.proxy_ip_pool import IpInfoModel, create_ip_pool
 from store import douyin as douyin_store
 from tools import utils
@@ -224,6 +224,7 @@ class DouYinCrawler(AbstractCrawler):
             user_data_dir = os.path.join(os.getcwd(), "browser_data",
                                          config.USER_DATA_DIR % self.platform)  # type: ignore
             browser_context = await chromium.launch_persistent_context(
+                channel="msedge",
                 user_data_dir=user_data_dir,
                 accept_downloads=True,
                 headless=headless,

@@ -10,7 +10,7 @@ from tenacity import (RetryError, retry, retry_if_result, stop_after_attempt,
                       wait_fixed)
 
 import config
-from base.base_crawler import AbstractLogin
+from base.base import AbstractLogin
 from tools import utils
 
 
@@ -53,12 +53,11 @@ class DouYinLogin(AbstractLogin):
 
         print("------------------------------")
 
-
         # 如果页面重定向到滑动验证码页面，需要再次滑动滑块
         await asyncio.sleep(6)
-        current_page_title = await self.context_page.title()
-        if "验证码中间页" in current_page_title:
-            await self.check_page_display_slider(move_step=3, slider_level="hard")
+        # current_page_title = await self.context_page.title()
+        # if "验证码中间页" in current_page_title:
+        #     await self.check_page_display_slider(move_step=10, slider_level="hard")
 
         await self.second_verify()
 
@@ -80,6 +79,7 @@ class DouYinLogin(AbstractLogin):
         """Check if the current login status is successful and return True otherwise return False"""
         current_cookie = await self.browser_context.cookies()
         _, cookie_dict = utils.convert_cookies(current_cookie)
+        print(cookie_dict.get("LOGIN_STATUS"))
         if cookie_dict.get("LOGIN_STATUS") == "1":
             return True
         return False
@@ -112,7 +112,8 @@ class DouYinLogin(AbstractLogin):
         asyncio.get_running_loop().run_in_executor(executor=None, func=partial_show_qrcode)
         await asyncio.sleep(2)
 
-        await self.check_page_display_slider(move_step=10, slider_level="easy")
+        await self.check_page_display_slider(move_step=10, slider_level="hard")
+
 
     async def login_by_mobile(self):
         utils.logger.info("[DouYinLogin.login_by_mobile] Begin login douyin by mobile ...")

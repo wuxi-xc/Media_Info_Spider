@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 
 
 class ProviderNameEnum(Enum):
-    JISHU_HTTP_PROVIDER: str = "jishuhttp"
     KUAI_DAILI_PROVIDER: str = "kuaidaili"
 
 

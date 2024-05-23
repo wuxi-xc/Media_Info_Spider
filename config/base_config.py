@@ -1,5 +1,5 @@
 # 基础配置
-PLATFORM = "bili"  # xhs | dy | ks | bili | wb
+PLATFORM = "xhs"
 KEYWORDS = "飞驰人生2"
 LOGIN_TYPE = "qrcode"  # qrcode or phone or cookie
 COOKIES = ""
@@ -22,7 +22,7 @@ IP_PROXY_POOL_COUNT = 6
 IP_PROXY_PROVIDER_NAME = "kuaidaili"
 
 # 设置为True不会打开浏览器（无头浏览器），设置False会打开一个浏览器（小红书可能需要打开浏览器手动进行验证码验证）
-HEADLESS = True
+HEADLESS = False
 
 # 是否保存登录状态
 SAVE_LOGIN_STATE = True

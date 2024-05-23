@@ -8,7 +8,7 @@ import httpx
 import playwright.async_api
 from playwright.async_api import BrowserContext, Page
 
-from base.base_crawler import AbstactApiClient
+from base.base import AbstactApiClient
 from tools import utils
 from .exception import DataFetchError
 from .graphql import KuaiShouGraphQL

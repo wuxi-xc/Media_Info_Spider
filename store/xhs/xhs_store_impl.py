@@ -11,7 +11,7 @@ from typing import Dict
 
 import aiofiles
 
-from base.base_crawler import AbstractStore
+from base.base import AbstractStore
 from tools import utils
 from var import crawler_type_var
 

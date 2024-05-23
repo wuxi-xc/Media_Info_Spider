@@ -12,7 +12,7 @@ from playwright.async_api import BrowserContext, Page
 from tenacity import (RetryError, retry, retry_if_result, stop_after_attempt,
                       wait_fixed)
 
-from base.base_crawler import AbstractLogin
+from base.base import AbstractLogin
 from tools import utils
 
 
@@ -43,7 +43,7 @@ class BilibiliLogin(AbstractLogin):
             raise ValueError(
                 "[BilibiliLogin.begin] Invalid Login Type Currently only supported qrcode or phone or cookie ...")
 
-    @retry(stop=stop_after_attempt(20), wait=wait_fixed(1), retry=retry_if_result(lambda value: value is False))
+    @retry(stop=stop_after_attempt(20), wait=wait_fixed(2), retry=retry_if_result(lambda value: value is False))
     async def check_login_state(self) -> bool:
         """
             Check if the current login status is successful and return True otherwise return False

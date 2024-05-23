@@ -9,10 +9,10 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 import config
-from proxy.providers import new_jisu_http_proxy, new_kuai_daili_proxy
+from proxy.kuaidl_proxy import new_kuai_daili_proxy
 from tools import utils
 
-from .base_proxy import ProxyProvider
+from base.base import  ProxyProvider
 from .types import IpInfoModel, ProviderNameEnum
 
 
@@ -86,7 +86,6 @@ class ProxyIpPool:
 
 
 IpProxyProvider: Dict[str, ProxyProvider] = {
-    ProviderNameEnum.JISHU_HTTP_PROVIDER.value: new_jisu_http_proxy(),
     ProviderNameEnum.KUAI_DAILI_PROVIDER.value: new_kuai_daili_proxy()
 }
 
