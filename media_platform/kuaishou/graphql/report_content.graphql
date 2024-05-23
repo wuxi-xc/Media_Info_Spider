@@ -1,0 +1,6 @@
+mutation ReportSubmitMutation($targetId: String, $reportType: Int, $page: String, $reportItem: Int, $reportDetail: String, $reportedUserId: String, $extraPhotoId: String) {
+  visionReportSubmit(targetId: $targetId, reportType: $reportType, page: $page, reportItem: $reportItem, reportDetail: $reportDetail, reportedUserId: $reportedUserId, extraPhotoId: $extraPhotoId) {
+    result
+    __typename
+  }
+}
