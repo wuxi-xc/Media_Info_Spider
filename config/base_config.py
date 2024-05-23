@@ -1,6 +1,6 @@
 # 基础配置
-PLATFORM = "xhs"
-KEYWORDS = "飞驰人生2"
+PLATFORM = "xhs,kuaishou,bilibili,wb"
+KEYWORDS = "第二十条"
 LOGIN_TYPE = "qrcode"  # qrcode or phone or cookie
 COOKIES = ""
 SORT_TYPE = "popularity_descending"  # 具体值参见media_platform.xxx.field下的枚举值，暂时只支持小红书

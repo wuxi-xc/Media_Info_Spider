@@ -119,8 +119,7 @@ class BilibiliCrawler(AbstractCrawler):
                         await bilibili_store.update_bilibili_video(video_item)
 
                 if config.ENABLE_REPORT:
-                    result = await self.bili_client.report_video(aid="1754979870") #BV1pt421T7Dy
-                    print(result)
+                    await self.bili_client.report_video(aid="1853977397")  #BV1js421K7zw # 1253365227 BV19J4m1n7tQ
                 page += 1
                 utils.logger.info(f"[BilibiliCrawler.search] keyword:{keyword}, video_list:{video_id_list}")
                 await self.batch_get_video_comments(video_id_list)

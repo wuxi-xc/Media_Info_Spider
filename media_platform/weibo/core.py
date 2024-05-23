@@ -135,7 +135,6 @@ class WeiboCrawler(AbstractCrawler):
 
                 if config.ENABLE_REPORT:
                     result = await self.wb_client.report_note("5027340742036119", "5678490367", "7659503784", "传播盗版资源")
-                    print(result)
 
                 page += 1
                 utils.logger.info(f"[WeiBoCrawler.search] keyword:{keyword}, note_list:{note_id_list}")

@@ -22,6 +22,7 @@ class CrawlerFactory:
         "wb": WeiboCrawler
     }
 
+    # {"code":0,"message":"0","ttl":1,"data":{}}
     @staticmethod
     def create_crawler(platform: str) -> AbstractCrawler:
         crawler_class = CrawlerFactory.CRAWLERS.get(platform)

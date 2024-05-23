@@ -129,7 +129,7 @@ class KuaishouCrawler(AbstractCrawler):
 
                 if config.ENABLE_REPORT:
                     result = await self.ks_client.report_by_id(video_id=video_detail.get("id"), reportUserID=video_detail.get("user_id"), reason="侵犯版权，涉嫌传播盗版资源内容")
-                    print(result)
+                    print("kuaishou report result:", result)
 
                 # batch fetch video comments
                 page += 1

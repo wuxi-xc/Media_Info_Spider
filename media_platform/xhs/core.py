@@ -83,7 +83,6 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await login_obj.begin()
                 await self.xhs_client.update_cookies(browser_context=self.browser_context)
 
-            print("222")
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":

@@ -175,7 +175,19 @@ class BilibiliClient(AbstactApiClient):
 
         headers = copy.copy(self.headers)
         headers["Content-Type"] = "application/x-www-form-urlencoded"
-        return await self.request(method="POST", url=f"{self._host}{uri}", data=post_data, headers=headers)
+
+        async with httpx.AsyncClient(proxies=self.proxies) as client:
+            response = await client.request(
+                "POST", f"{self._host}{uri}", timeout=self.timeout,data=post_data, headers=headers
+            )
+
+        data: Dict = response.json()
+        if data.get("code") == 0:
+            utils.logger.info(f"[BilibiliClient.report_video] report video {aid} successfull!")
+            return data
+        else:
+            utils.logger.error(f"[BilibiliClient.report_video] report video {aid} failed: {data.get('message')}")
+            return data
 
     async def forensics_by_id(self, context_page : Page, aid: Union[int, None] = None, bvid: Union[str, None] = None) -> Union[str, None]:
         """
