@@ -18,11 +18,6 @@
 MediaCrawler视频教程课程已录制完结，包含入门教程使用、源码剖析、如何参与开源项目并贡献代码、wechatpayv3 SDK开源仓库代码贡献、MediaCrawlerPro重构技术方案...<br>
 抖音学浪课程链接：https://v.douyin.com/iYeQFyAf/ 
 
-## 感谢下列Sponsors对本仓库赞助
-<a href="https://sider.ai/ad-land-redirect?source=github&p1=mi&p2=kk">通过注册这个款免费的GPT助手，帮我获取GPT4额度作为支持。也是我每天在用的一款chrome AI助手插件</a>
-<a href="https://sider.ai/ad-land-redirect?source=github&p1=mi&p2=kk" target="_blank"><img src="https://s2.loli.net/2024/04/01/jK8drZ2bxTg67q9.png" ></a>
-
-成为赞助者，展示你的产品在这里，联系作者：3503222760@qq.com
 
 ## 功能列表
 | 平台  | Cookie 登录 | 二维码登录 | 手机号登录 | 关键词搜索 | 指定视频/帖子 ID 爬取 | 登录状态缓存 | 数据保存 | IP 代理池 | 滑块验证码 |
@@ -85,45 +80,6 @@ MediaCrawler视频教程课程已录制完结，包含入门教程使用、源�
 - 支持保存到关系型数据库（Mysql、PgSQL等）
 - 支持保存到csv中（data/目录下）
 - 支持保存到json中（data/目录下）
-
-## MediaCrawler爬虫项目交流群：
-> 7天有效期，自动更新, 如果人满了可以加作者wx拉进群: yzglan，备注来自github.
-
-<div style="max-width: 200px">  
-<p><img alt="打赏-微信" src="static/images/3群二维码.jpg" style="width: 200px;height: 100%" ></p>
-</div>
-
-
-## 打赏
-免费开源不易，如果项目帮到你了，可以给我打赏哦，您的支持就是我最大的动力！
-<div style="display: flex;justify-content: space-between;width: 100%">
-    <p><img alt="打赏-微信" src="static/images/wechat_pay.jpeg" style="width: 200px;height: 100%" ></p>
-    <p><img alt="打赏-支付宝" src="static/images/zfb_pay.png"   style="width: 200px;height: 100%" ></p>
-</div>
-
-
-
-## 运行报错常见问题Q&A
-> 遇到问题先自行搜索解决下，现在AI很火，用ChatGPT大多情况下能解决你的问题 [免费的ChatGPT](https://sider.ai/ad-land-redirect?source=github&p1=mi&p2=kk)  
-
-➡️➡️➡️ [常见问题](docs/常见问题.md)
-
-
-## 项目代码结构
-➡️➡️➡️ [项目代码结构说明](docs/项目代码结构.md)
-
-## 手机号登录说明
-➡️➡️➡️ [手机号登录说明](docs/手机号登录说明.md)
-
-
-
-## star 趋势图
-- 如果该项目对你有帮助，star一下 ❤️❤️❤️
-
-[![Star History Chart](https://api.star-history.com/svg?repos=NanmiCoder/MediaCrawler&type=Date)](https://star-history.com/#NanmiCoder/MediaCrawler&Date)
-
-
-
 
 ## 参考
 
