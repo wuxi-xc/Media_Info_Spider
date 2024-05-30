@@ -61,15 +61,20 @@ class DouYinCrawler(AbstractCrawler):
 
             self.dy_client = await self.create_douyin_client(httpx_proxy_format)
             if not await self.dy_client.pong(browser_context=self.browser_context):
-                login_obj = DouYinLogin(
-                    login_type=self.login_type,
-                    login_phone="", # you phone number
-                    browser_context=self.browser_context,
-                    context_page=self.context_page,
-                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
-                )
-                await login_obj.begin()
-                await self.dy_client.update_cookies(browser_context=self.browser_context)
+                if self.crawler_type == "login":
+                    login_obj = DouYinLogin(
+                        login_type=self.login_type,
+                        login_phone="",  # you phone number
+                        browser_context=self.browser_context,
+                        context_page=self.context_page,
+                        cookie_str=os.environ.get("COOKIES", config.COOKIES)
+                    )
+                    await login_obj.begin()
+                    await self.dy_client.update_cookies(browser_context=self.browser_context)
+                    return
+                else:
+                    utils.logger.error("[DouyinCrawler.start] Douyin Crawler login has expired ...")
+                    return {"code" : 1, "msg" : "Douyin Crawler login has expired, please update account state..."}
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":
@@ -175,7 +180,7 @@ class DouYinCrawler(AbstractCrawler):
         :param aweme_list: List[str]
         :return:
         """
-        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
+        if not int(os.environ.get("ENABLE_GET_COMMENTS", config.ENABLE_GET_COMMENTS)):
             utils.logger.info(f"[DouYinCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 

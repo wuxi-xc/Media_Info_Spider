@@ -74,15 +74,19 @@ class XiaoHongShuCrawler(AbstractCrawler):
 
             # 检查是否登录成功，如果没有登录信息则需要重新进行登录
             if not await self.xhs_client.pong():
-                login_obj = XiaoHongShuLogin(
-                    login_type=self.login_type,
-                    login_phone="",  # input your phone number
-                    browser_context=self.browser_context,
-                    context_page=self.context_page,
-                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
-                )
-                await login_obj.begin()
-                await self.xhs_client.update_cookies(browser_context=self.browser_context)
+                if self.crawler_type == "login":
+                    login_obj = XiaoHongShuLogin(
+                        login_type=self.login_type,
+                        login_phone="",  # input your phone number
+                        browser_context=self.browser_context,
+                        context_page=self.context_page,
+                        cookie_str=os.environ.get("COOKIES", config.COOKIES)
+                    )
+                    await login_obj.begin()
+                    await self.xhs_client.update_cookies(browser_context=self.browser_context)
+                else:
+                    utils.logger.error("[XiaohongshuCrawler.start] Xiaohongshu Crawler login has expired ...")
+                    return {"code": 1, "msg": "Xiaohongshu Crawler login has expired, please update account state ..."}
 
 
             crawler_type_var.set(self.crawler_type)
@@ -180,7 +184,7 @@ class XiaoHongShuCrawler(AbstractCrawler):
         :param note_list: note list
         :return:
         """
-        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
+        if not int(os.environ.get("ENABLE_GET_COMMENTS", config.ENABLE_GET_COMMENTS)):
             utils.logger.info(f"[XiaoHongShuCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 

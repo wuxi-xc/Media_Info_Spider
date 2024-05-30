@@ -59,8 +59,8 @@ if __name__ == '__main__':
     os.environ['PLATFORM'] = 'xhs'
     os.environ['LOGIN_TYPE'] = 'qrcode'
     os.environ['CRAWLER_TYPE'] = 'search'
-    os.environ['ENABLE_GET_COMMENTS'] = "0"
-    os.environ['RESOURCE_NAME'] = '第二十条'
+    # os.environ['ENABLE_GET_COMMENTS'] = 'False'
+    os.environ['RESOURCE_NAME'] = '庆余年2'
 
     try:
         # asyncio.run(main()) #事件循环异常关闭

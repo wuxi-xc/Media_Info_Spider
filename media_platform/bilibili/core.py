@@ -67,15 +67,20 @@ class BilibiliCrawler(AbstractCrawler):
             # Create a client to interact with the xiaohongshu website.
             self.bili_client = await self.create_bilibili_client(httpx_proxy_format)
             if not await self.bili_client.pong():
-                login_obj = BilibiliLogin(
-                    login_type=self.login_type,
-                    login_phone="",  # your phone number
-                    browser_context=self.browser_context,
-                    context_page=self.context_page,
-                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
-                )
-                await login_obj.begin()
-                await self.bili_client.update_cookies(browser_context=self.browser_context)
+                if self.crawler_type == "login":
+                    login_obj = BilibiliLogin(
+                        login_type=self.login_type,
+                        login_phone="",  # your phone number
+                        browser_context=self.browser_context,
+                        context_page=self.context_page,
+                        cookie_str=os.environ.get("COOKIES", config.COOKIES)
+                    )
+                    await login_obj.begin()
+                    await self.bili_client.update_cookies(browser_context=self.browser_context)
+                    return
+                else:
+                    utils.logger.error("[BilibiliCrawler.start] Bilibili Crawler login has expired ...")
+                    return {"code" : 1, "msg" : "Bilibili Crawler login has expired, please update account state ..."}
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":
@@ -137,7 +142,7 @@ class BilibiliCrawler(AbstractCrawler):
         :param video_id_list:
         :return:
         """
-        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
+        if not int(os.environ.get("ENABLE_GET_COMMENTS", config.ENABLE_GET_COMMENTS)):
             utils.logger.info(f"[BilibiliCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 

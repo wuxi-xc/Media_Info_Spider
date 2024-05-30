@@ -62,15 +62,19 @@ class KuaishouCrawler(AbstractCrawler):
             # Create a client to interact with the kuaishou website.
             self.ks_client = await self.create_ks_client(httpx_proxy_format)
             if not await self.ks_client.pong():
-                login_obj = KuaishouLogin(
-                    login_type=self.login_type,
-                    login_phone=httpx_proxy_format,
-                    browser_context=self.browser_context,
-                    context_page=self.context_page,
-                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
-                )
-                await login_obj.begin()
-                await self.ks_client.update_cookies(browser_context=self.browser_context)
+                if self.crawler_type == "login":
+                    login_obj = KuaishouLogin(
+                        login_type=self.login_type,
+                        login_phone=httpx_proxy_format,
+                        browser_context=self.browser_context,
+                        context_page=self.context_page,
+                        cookie_str=os.environ.get("COOKIES", config.COOKIES)
+                    )
+                    await login_obj.begin()
+                    await self.ks_client.update_cookies(browser_context=self.browser_context)
+                else:
+                    utils.logger.error("[KuaishouCrawler.start] Kuaishou Crawler login has expired ...")
+                    return {"code": 1, "msg": "Kuaishou Crawler login has expired, please update account state..."}
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":
@@ -216,7 +220,7 @@ class KuaishouCrawler(AbstractCrawler):
         :param video_id_list:
         :return:
         """
-        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
+        if not int(os.environ.get("ENABLE_GET_COMMENTS", config.ENABLE_GET_COMMENTS)):
             utils.logger.info(f"[KuaishouCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 

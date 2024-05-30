@@ -70,22 +70,26 @@ class WeiboCrawler(AbstractCrawler):
             # Create a client to interact with the xiaohongshu website.
             self.wb_client = await self.create_weibo_client(httpx_proxy_format)
             if not await self.wb_client.pong():
-                login_obj = WeiboLogin(
-                    login_type=self.login_type,
-                    login_phone="",  # your phone number
-                    browser_context=self.browser_context,
-                    context_page=self.context_page,
-                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
-                )
-                await self.context_page.goto("https://passport.weibo.com/sso/signin")
-                await asyncio.sleep(1)
-                await login_obj.begin()
+                if self.crawler_type == "login":
+                    login_obj = WeiboLogin(
+                        login_type=self.login_type,
+                        login_phone="",  # your phone number
+                        browser_context=self.browser_context,
+                        context_page=self.context_page,
+                        cookie_str=os.environ.get("COOKIES", config.COOKIES)
+                    )
+                    await self.context_page.goto("https://passport.weibo.com/sso/signin")
+                    await asyncio.sleep(1)
+                    await login_obj.begin()
 
-                # 使用电脑端登录成功后重定向到手机端的网站，再更新手机端登录成功的cookie
-                utils.logger.info("[WeiboCrawler.start] redirect weibo mobile homepage and update cookies on mobile platform")
-                await self.context_page.goto(self.mobile_index_url)
-                await asyncio.sleep(2)
-                await self.wb_client.update_cookies(browser_context=self.browser_context)
+                    # 使用电脑端登录成功后重定向到手机端的网站，再更新手机端登录成功的cookie
+                    utils.logger.info("[WeiboCrawler.start] redirect weibo mobile homepage and update cookies on mobile platform")
+                    await self.context_page.goto(self.mobile_index_url)
+                    await asyncio.sleep(2)
+                    await self.wb_client.update_cookies(browser_context=self.browser_context)
+                else:
+                    utils.logger.error("[WeiboCrawler.start] Weibo Crawler login has expired ...")
+                    return {"code": 1, "msg": "Weibo Crawler login has expired, please update account state ..."}
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":
@@ -200,7 +204,7 @@ class WeiboCrawler(AbstractCrawler):
         :param note_id_list:
         :return:
         """
-        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
+        if not int(os.environ.get("ENABLE_GET_COMMENTS", config.ENABLE_GET_COMMENTS)):
             utils.logger.info(f"[WeiboCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 
