@@ -5,7 +5,6 @@
 from typing import List
 
 import config
-
 from .douyin_store_impl import *
 
 

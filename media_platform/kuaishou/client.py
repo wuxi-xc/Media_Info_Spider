@@ -58,7 +58,10 @@ class KuaiShouClient(AbstactApiClient):
                                   data=json_str, headers=self.headers)
 
     async def pong(self) -> bool:
-        """get a note to check if login state is ok"""
+        """
+        通过发送请求查看请求状态来判断是否登录
+        Return:
+        """
         utils.logger.info("[KuaiShouClient.pong] Begin pong kuaishou...")
         ping_flag = False
         try:
@@ -196,8 +199,9 @@ class KuaiShouClient(AbstactApiClient):
 
         result = []
         pcursor = ""
+        count = 0
 
-        while pcursor != "no_more":
+        while pcursor != "no_more" and count < 2:
             comments_res = await self.get_video_comments(photo_id, pcursor)
             vision_commen_list = comments_res.get("visionCommentList", {})
             pcursor = vision_commen_list.get("pcursor", "")
@@ -208,6 +212,7 @@ class KuaiShouClient(AbstactApiClient):
 
             result.extend(comments)
             await asyncio.sleep(crawl_interval)
+            count += 1
             if not is_fetch_sub_comments:
                 continue
             # todo handle get sub comments

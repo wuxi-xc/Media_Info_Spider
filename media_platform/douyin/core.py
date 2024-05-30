@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import os
 import random
 from asyncio import Task
@@ -65,7 +66,7 @@ class DouYinCrawler(AbstractCrawler):
                     login_phone="", # you phone number
                     browser_context=self.browser_context,
                     context_page=self.context_page,
-                    cookie_str=config.COOKIES
+                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
                 )
                 await login_obj.begin()
                 await self.dy_client.update_cookies(browser_context=self.browser_context)
@@ -83,7 +84,12 @@ class DouYinCrawler(AbstractCrawler):
         dy_limit_count = 10  # douyin limit page fixed value
         if config.CRAWLER_MAX_NOTES_COUNT < dy_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = dy_limit_count
-        for keyword in config.KEYWORDS.split(","):
+
+        resource_name_list = os.environ.get("RESOURCE_NAME","").split(",")
+        keywords_list = os.environ.get("KEYWORDS",config.KEYWORDS).split(",")
+        combined_list = [f"{resource}{keyword}" for resource, keyword in itertools.product(resource_name_list, keywords_list)]
+        search_keyword = ",".join(combined_list)
+        for keyword in search_keyword.split(","):
             utils.logger.info(f"[DouYinCrawler.search] Current keyword: {keyword}")
             page = 0
             while (page + 1) * dy_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
@@ -93,6 +99,7 @@ class DouYinCrawler(AbstractCrawler):
                                                                             offset=page * dy_limit_count,
                                                                             publish_time=PublishTimeType.UNLIMITED
                                                                             )
+                    utils.logger.error(f"[DouYinCrawler.search] search douyin keyword: {keyword} successfully")
                 except DataFetchError:
                     utils.logger.error(f"[DouYinCrawler.search] search douyin keyword: {keyword} failed")
                     break
@@ -120,7 +127,9 @@ class DouYinCrawler(AbstractCrawler):
                 await self.batch_get_note_comments(aweme_list)
 
     async def get_specified_awemes(self):
-        """Get the information and comments of the specified post"""
+        """
+        Get the information and comments of the specified aweme
+        """
         semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
         task_list = [
             self.get_aweme_detail(aweme_id=aweme_id, semaphore=semaphore) for aweme_id in config.DY_SPECIFIED_ID_LIST
@@ -132,7 +141,9 @@ class DouYinCrawler(AbstractCrawler):
         await self.batch_get_note_comments(config.DY_SPECIFIED_ID_LIST)
 
     async def get_aweme_forensics(self, aweme_id: str, semaphore: asyncio.Semaphore) -> None:
-        """Get note detail"""
+        """
+        Get note forensics
+        """
         async with semaphore:
             try:
                 await self.dy_client.forensics_by_id(aweme_id=aweme_id, context_page= await self.browser_context.new_page())
@@ -141,7 +152,12 @@ class DouYinCrawler(AbstractCrawler):
                     f"[DouYinCrawler.get_aweme_detail] have not fund note detail aweme_id:{aweme_id}, err: {ex}")
 
     async def get_aweme_detail(self, aweme_id: str, semaphore: asyncio.Semaphore) -> Any:
-        """Get note detail"""
+        """
+        Get note detail
+        :param aweme_id: str
+        :param semaphore: asyncio.S
+        :return:
+        """
         async with semaphore:
             try:
                 await self.dy_client.forensics_by_id(aweme_id=aweme_id)
@@ -154,7 +170,12 @@ class DouYinCrawler(AbstractCrawler):
                 return None
 
     async def batch_get_note_comments(self, aweme_list: List[str]) -> None:
-        if not config.ENABLE_GET_COMMENTS:
+        """
+        Batch get note comments
+        :param aweme_list: List[str]
+        :return:
+        """
+        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
             utils.logger.info(f"[DouYinCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 
@@ -168,6 +189,12 @@ class DouYinCrawler(AbstractCrawler):
             await asyncio.wait(task_list)
 
     async def get_comments(self, aweme_id: str, semaphore: asyncio.Semaphore) -> None:
+        """
+        Get aweme comments
+        :param aweme_id: str
+        :param semaphore: asyncio.S
+        :return:
+        """
         async with semaphore:
             try:
                 # 将关键词列表传递给 get_aweme_all_comments 方法
@@ -183,7 +210,11 @@ class DouYinCrawler(AbstractCrawler):
 
     @staticmethod
     def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:
-        """format proxy info for playwright and httpx"""
+        """
+        format proxy info for playwright and httpx
+        :param ip_proxy_info: IpInfoModel
+        :return:
+        """
         playwright_proxy = {
             "server": f"{ip_proxy_info.protocol}{ip_proxy_info.ip}:{ip_proxy_info.port}",
             "username": ip_proxy_info.user,
@@ -195,7 +226,11 @@ class DouYinCrawler(AbstractCrawler):
         return playwright_proxy, httpx_proxy
 
     async def create_douyin_client(self, httpx_proxy: Optional[str]) -> DOUYINClient:
-        """Create douyin client"""
+        """
+        Create douyin client
+        :param httpx_proxy: Optional[str]
+        :return:
+        """
         cookie_str, cookie_dict = utils.convert_cookies(await self.browser_context.cookies())  # type: ignore
         douyin_client = DOUYINClient(
             proxies=httpx_proxy,
@@ -219,7 +254,14 @@ class DouYinCrawler(AbstractCrawler):
             user_agent: Optional[str],
             headless: bool = True
     ) -> BrowserContext:
-        """Launch browser and create browser context"""
+        """
+        Launch browser and create browser context
+        :param chromium: BrowserType
+        :param playwright_proxy: Optional[Dict]
+        :param user_agent: Optional[str]
+        :param headless: bool
+        :return:
+        """
         if config.SAVE_LOGIN_STATE:
             user_data_dir = os.path.join(os.getcwd(), "browser_data",
                                          config.USER_DATA_DIR % self.platform)  # type: ignore

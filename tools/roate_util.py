@@ -10,11 +10,10 @@ import httpx
 import random
 from io import BytesIO
 from PIL import Image
+from torchvision import transforms
 import torch
 from playwright.sync_api import Page, sync_playwright
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_result
-from torchvision import transforms
-
 from tools import utils
 
 class CNN(nn.Module):
@@ -50,13 +49,14 @@ def get_angle(image: Image) -> int:
     model = CNN()
     model.load_state_dict(torch.load('libs/rotate_model.pth'))
     model.eval()
+
     # Make a prediction
     with torch.no_grad():
         output = model(image)
         _, predicted = torch.max(output, 1)
         return predicted.item()
 
-def get_tracks(distance : int):
+def get_tracks_roate(distance : int):
     """
     获取移动轨迹
     :param distance: 需要移动的距离
@@ -81,7 +81,7 @@ def get_tracks(distance : int):
 
     return tracks
 
-@retry(stop=stop_after_attempt(10), wait=wait_fixed(2), retry=retry_if_result(lambda value: value is False))
+@retry(stop=stop_after_attempt(10), wait=wait_fixed(1), retry=retry_if_result(lambda value: value is False))
 async def correct_angle(context_page: Page) -> bool:
     """
     通过滑动验证码，进行验证码校验
@@ -100,6 +100,7 @@ async def correct_angle(context_page: Page) -> bool:
     img = Image.open(BytesIO(response.content))
 
     correction_angle = get_angle(img)
+
     await context_page.wait_for_selector('//div[@class="red-captcha-slider"]')
     slider = await context_page.query_selector('//div[@class="red-captcha-slider"]')
     slider_box = await slider.bounding_box()
@@ -111,7 +112,7 @@ async def correct_angle(context_page: Page) -> bool:
     await context_page.mouse.move((slider_box['x'] + slider_box['width'] / 2), (slider_box['y'] + slider_box['height'] / 2))
     await context_page.mouse.down()
 
-    tracks = get_tracks(move_x)
+    tracks = get_tracks_roate(move_x)
     for track in tracks:
         target_X = track + slider_box['x'] + slider_box['width'] / 2
         target_Y = slider_box['y'] + slider_box['height'] / 2
@@ -127,19 +128,17 @@ async def correct_angle(context_page: Page) -> bool:
         return False
 
 if __name__ == '__main__':
-    # with sync_playwright() as playwright:
-    #     browser = playwright.chromium.launch(headless=False)
-    #     context = browser.new_context()
-    #
-    #     context.add_init_script(path='../libs/stealth.min.js')
-    #     page = context.new_page()
-    #     page.goto('https://www.xiaohongshu.com/website-login/captcha?redirectPath=https%3A%2F%2Fwww.xiaohongshu.com%2Fexplore&verifyUuid=shield-4f9bcc31-0bc0-462a-843a-e60239713e46&verifyType=101&verifyBiz=461')
-    #
-    #     context.add_init_script(path='../libs/stealth.min.js')
-    #
-    #     time.sleep(5)
-    #
-    #     correct_angle(page)
-    #     browser.close()
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=False)
+        context = browser.new_context()
 
-    pass
+        context.add_init_script(path='../libs/stealth.min.js')
+        page = context.new_page()
+        page.goto('https://www.xiaohongshu.com/website-login/captcha?redirectPath=https%3A%2F%2Fwww.xiaohongshu.com%2Fexplore&verifyUuid=shield-4f9bcc31-0bc0-462a-843a-e60239713e46&verifyType=101&verifyBiz=461')
+
+        context.add_init_script(path='../libs/stealth.min.js')
+
+        time.sleep(5)
+
+        correct_angle(page)
+        browser.close()

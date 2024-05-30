@@ -69,8 +69,11 @@ class WeiboClient(AbstactApiClient):
                                   data=json_str, headers=headers)
 
     async def pong(self) -> bool:
-        """查询登录状态"""
-        utils.logger.info("[WeiboClient.pong] Begin pong weibo...")
+        """
+        通过发送请求获取config信息来查询登录状态
+        Return:
+        """
+        utils.logger.info("[WeiboClient.pong] Begin to pong weibo...")
         ping_flag = False
         try:
             uri  = "/api/config"
@@ -205,7 +208,8 @@ class WeiboClient(AbstactApiClient):
         result = []
         is_end = False
         max_id = -1
-        while not is_end:
+        count = 0
+        while not is_end and count < 2:
             comments_res = await self.get_note_comments(note_id, max_id)
             max_id: int = comments_res.get("max_id")
             comment_list: List[Dict] = comments_res.get("data", [])
@@ -213,6 +217,8 @@ class WeiboClient(AbstactApiClient):
             if callback:  # 如果有回调函数，就执行回调函数
                 await callback(note_id, comment_list)
             await asyncio.sleep(crawl_interval)
+
+            count += 1
             if not is_fetch_sub_comments:
                 result.extend(comment_list)
                 continue

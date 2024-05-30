@@ -131,9 +131,8 @@ class XiaoHongShuClient(AbstactApiClient):
 
     async def pong(self) -> bool:
         """
-        用于检查登录态是否失效，直接发起一个请求，检查是否能获取到数据
-        Returns:
-
+        用于检查登录态是否失效，直接发起一个请求，检查是否能获取到数据(小红书不登录无法搜索)
+        Return:
         """
 
         utils.logger.info("[XiaoHongShuClient.pong] Begin to pong xhs...")
@@ -153,9 +152,7 @@ class XiaoHongShuClient(AbstactApiClient):
         API客户端提供的更新cookies方法，一般情况下登录成功后会调用此方法
         Args:
             browser_context: 浏览器上下文对象
-
         Returns:
-
         """
         cookie_str, cookie_dict = utils.convert_cookies(await browser_context.cookies())
         self.headers["Cookie"] = cookie_str
@@ -269,22 +266,23 @@ class XiaoHongShuClient(AbstactApiClient):
         }
         return await self.get(uri, params)
 
-    async def get_note_all_comments(self, note_id: str, crawl_interval: float = 1.0,
+    async def get_note_all_comments(self, note_id: str, crawl_interval: float = 1.0,is_fetch_sub_comments=False,
                                     callback: Optional[Callable] = None) -> List[Dict]:
         """
         获取指定笔记下的所有一级评论，该方法会一直查找一个帖子下的所有评论信息
         Args:
             note_id: 笔记ID
             crawl_interval: 爬取一次笔记的延迟单位（秒）
+            is_fetch_sub_comments: 是否获取子评论
             callback: 一次笔记爬取结束后
-
         Returns:
 
         """
         result = []
         comments_has_more = True
         comments_cursor = ""
-        while comments_has_more:
+        count = 0
+        while comments_has_more and count < 2:
             comments_res = await self.get_note_comments(note_id, comments_cursor)
             comments_has_more = comments_res.get("has_more", False)
             comments_cursor = comments_res.get("cursor", "")
@@ -296,7 +294,12 @@ class XiaoHongShuClient(AbstactApiClient):
             if callback:
                 await callback(note_id, comments)
             await asyncio.sleep(crawl_interval)
-            result.extend(comments)
+
+            count += 1
+            if is_fetch_sub_comments:
+                result.extend(comments)
+                continue
+
         return result
 
     async def get_creator_info(self, user_id: str) -> Dict:

@@ -95,7 +95,10 @@ class BilibiliClient(AbstactApiClient):
                                   data=json_str, headers=self.headers)
 
     async def pong(self) -> bool:
-        """get a note to check if login state is ok"""
+        """
+        通过发送一个请求来查看响应中的参数来检测是否登录
+        Return:
+        """
         utils.logger.info("[BilibiliClient.pong] Begin pong bilibili...")
         ping_flag = False
         try:
@@ -230,7 +233,7 @@ class BilibiliClient(AbstactApiClient):
             "oid": video_id,
             "mode": order_mode.value,
             "type": 1,
-            "ps": 20,
+            "ps": 10,
             "next": next
         }
         return await self.get(uri, post_data)
@@ -248,8 +251,9 @@ class BilibiliClient(AbstactApiClient):
 
         result = []
         is_end = False
-        next_page =0
-        while not is_end:
+        next_page = 0
+        count = 0
+        while not is_end and count < 2:
             comments_res = await self.get_video_comments(video_id, CommentOrderType.DEFAULT, next_page)
             curson_info: Dict = comments_res.get("cursor")
             comment_list: List[Dict] = comments_res.get("replies", [])
@@ -258,6 +262,7 @@ class BilibiliClient(AbstactApiClient):
             if callback:  # 如果有回调函数，就执行回调函数
                 await callback(video_id, comment_list)
             await asyncio.sleep(crawl_interval)
+            count += 1
             if not is_fetch_sub_comments:
                 result.extend(comment_list)
                 continue

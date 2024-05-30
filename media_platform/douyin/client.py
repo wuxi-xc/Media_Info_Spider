@@ -2,7 +2,7 @@
 import asyncio
 import copy
 import urllib.parse
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import execjs
 import httpx
@@ -11,7 +11,6 @@ from playwright.async_api import BrowserContext, Page, TimeoutError
 from base.base import AbstactApiClient
 from tools import utils
 from var import request_keyword_var
-
 from .exception import *
 from .field import *
 
@@ -46,13 +45,13 @@ class DOUYINClient(AbstactApiClient):
             "cookie_enabled": "true",
             "browser_language": "zh-CN",
             "browser_platform": "Win32",
-            "browser_name": "Firefox",
-            "browser_version": "110.0",
+            "browser_name": "Edge",
+            "browser_version": "124.0.0.0", # 110.0
             "browser_online": "true",
-            "engine_name": "Gecko",
+            "engine_name": "Blink", #Gecko
             "os_name": "Windows",
             "os_version": "10",
-            "engine_version": "109.0",
+            "engine_version": "124.0.0.0", #109.0
             "platform": "PC",
             "screen_width": "1920",
             "screen_height": "1200",
@@ -87,11 +86,18 @@ class DOUYINClient(AbstactApiClient):
         headers = headers or self.headers
         return await self.request(method="POST", url=f"{self._host}{uri}", data=data, headers=headers)
 
-    @staticmethod
-    async def pong(browser_context: BrowserContext) -> bool:
+    async def pong(self, browser_context: BrowserContext) -> bool:
+        """
+        通过检测cookie中的__security_server_data_status字段来判断是否登录成功
+        或者检测检测localStorage中的HasUserLogin字段
+        Return:
+        """
+        utils.logger.info("[DOUYINClient.pong] Begin pong douyin...")
+        local_storage = await self.playwright_page.evaluate("() => window.localStorage")
+        if local_storage.get("HasUserLogin", "") == "1":
+            return True
         _, cookie_dict = utils.convert_cookies(await browser_context.cookies())
-        # todo send some api to test login status
-        return cookie_dict.get("LOGIN_STATUS") == "1"
+        return cookie_dict.get("__security_server_data_status") == "1"
 
     async def update_cookies(self, browser_context: BrowserContext):
         cookie_str, cookie_dict = utils.convert_cookies(await browser_context.cookies())
@@ -169,14 +175,16 @@ class DOUYINClient(AbstactApiClient):
         return res.get("aweme_detail", {})
 
     async def get_aweme_comments(self, aweme_id: str, cursor: int = 0):
-        """get note comments
-
+        """
+        get note comments
+        :param aweme_id:
+        :param cursor:
         """
         uri = "/aweme/v1/web/comment/list/"
         params = {
             "aweme_id": aweme_id,
             "cursor": cursor,
-            "count": 20,
+            "count": 10,
             "item_type": 0
         }
         keywords = request_keyword_var.get()
@@ -203,7 +211,8 @@ class DOUYINClient(AbstactApiClient):
         result = []
         comments_has_more = 1
         comments_cursor = 0
-        while comments_has_more:
+        count = 0
+        while comments_has_more and count< 2:
             comments_res = await self.get_aweme_comments(aweme_id, comments_cursor)
             comments_has_more = comments_res.get("has_more", 0)
             comments_cursor = comments_res.get("cursor", 0)
@@ -213,8 +222,8 @@ class DOUYINClient(AbstactApiClient):
             result.extend(comments)
             if callback:  # 如果有回调函数，就执行回调函数
                 await callback(aweme_id, comments)
-
             await asyncio.sleep(crawl_interval)
+            count += 1
             if not is_fetch_sub_comments:
                 continue
             # todo fetch sub comments

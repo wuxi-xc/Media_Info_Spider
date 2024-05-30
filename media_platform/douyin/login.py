@@ -32,14 +32,12 @@ class DouYinLogin(AbstractLogin):
 
     async def begin(self):
         """
-            Start login douyin website
-            滑块中间页面的验证准确率不太OK... 如果没有特俗要求，建议不开抖音登录，或者使用cookies登录
+        开始进行抖音网站登录
+        滑块中间页面的验证准确率不太OK... 如果没有特殊要求，建议不开抖音登录，或者使用cookies登录
         """
 
-        # popup login dialog
         await self.popup_login_dialog()
 
-        # select login type
         if self.login_type == "qrcode":
             await self.login_by_qrcode()
         elif self.login_type == "phone":
@@ -49,17 +47,7 @@ class DouYinLogin(AbstractLogin):
         else:
             raise ValueError("[DouYinLogin.begin] Invalid Login Type Currently only supported qrcode or phone or cookie ...")
 
-        await asyncio.sleep(6)
-
-        print("------------------------------")
-
-        # 如果页面重定向到滑动验证码页面，需要再次滑动滑块
-        await asyncio.sleep(6)
-        # current_page_title = await self.context_page.title()
-        # if "验证码中间页" in current_page_title:
-        #     await self.check_page_display_slider(move_step=10, slider_level="hard")
-
-        await self.second_verify()
+        await asyncio.sleep(3)
 
         # check login state
         utils.logger.info(f"[DouYinLogin.begin] login finished then check login state ...")
@@ -76,16 +64,26 @@ class DouYinLogin(AbstractLogin):
 
     @retry(stop=stop_after_attempt(20), wait=wait_fixed(1), retry=retry_if_result(lambda value: value is False))
     async def check_login_state(self):
-        """Check if the current login status is successful and return True otherwise return False"""
-        current_cookie = await self.browser_context.cookies()
-        _, cookie_dict = utils.convert_cookies(current_cookie)
-        print(cookie_dict.get("LOGIN_STATUS"))
-        if cookie_dict.get("LOGIN_STATUS") == "1":
+        """
+        检查登录状态
+        :return:
+        """
+
+        local_storage = await self.context_page.evaluate("() => window.localStorage")
+        if local_storage.get("HasUserLogin", "") == "1":
             return True
+
+        # _, cookie_dict = utils.convert_cookies(await self.browser_context.cookies())
+        # print(cookie_dict.get("__security_server_data_status"))
+        # if cookie_dict.get("__security_server_data_status") == "1":
+        #     return True
         return False
 
     async def popup_login_dialog(self):
-        """If the login dialog box does not pop up automatically, we will manually click the login button"""
+        """
+        手动弹出登录框(首页不会自动弹出登录框，需要手动点击登录按钮)
+        :return:
+        """
         dialog_selector = "xpath=//div[@id='login-pannel']"
         try:
             # check dialog box is auto popup and wait for 10 seconds
@@ -112,8 +110,11 @@ class DouYinLogin(AbstractLogin):
         asyncio.get_running_loop().run_in_executor(executor=None, func=partial_show_qrcode)
         await asyncio.sleep(2)
 
-        await self.check_page_display_slider(move_step=10, slider_level="hard")
+        # 进行二次验证
+        task1 = asyncio.create_task(self.check_page_display_slider(move_step=10, slider_level="hard"))
+        task2 = asyncio.create_task(self.second_verify())
 
+        await asyncio.gather(task1, task2)
 
     async def login_by_mobile(self):
         utils.logger.info("[DouYinLogin.login_by_mobile] Begin login douyin by mobile ...")
@@ -150,12 +151,14 @@ class DouYinLogin(AbstractLogin):
     async def check_page_display_slider(self, move_step: int = 10, slider_level: str = "easy"):
         """
         检查页面是否出现滑动验证码
+        param move_step: 滑动验证码的移动速度
+        param slider_level: 滑动验证码的难度
         :return:
         """
-        # 等待滑动验证码的出现
+
         back_selector = "#captcha-verify-image"
         try:
-            await self.context_page.wait_for_selector(selector=back_selector, state="visible", timeout=30 * 1000)
+            await self.context_page.wait_for_selector(selector=back_selector, state="visible", timeout=20 * 1000)
         except PlaywrightTimeoutError:  # 没有滑动验证码，直接返回
             return
 
@@ -243,25 +246,31 @@ class DouYinLogin(AbstractLogin):
         await self.context_page.mouse.up()
 
     async def second_verify(self) -> None:
-        if "为保护你的账号安全，请选择一种身份验证方式" in await self.context_page.content():
-            utils.logger.info("[DouYinLogin.check_page_display_slider] second verify, please wait for result...")
-            pwd_btn_ele = self.context_page.locator(
-                "xpath=//*[@id='uc-second-verify']/div/div/article/div[2]/div/div[2]/div[2]/div[1]/p")
-            await pwd_btn_ele.click()
+        second_verify_selector = "xpath=//*[@id='uc-second-verify']/div/div"
+        try:
+            await self.context_page.wait_for_selector(selector=second_verify_selector, state="visible", timeout=1000 * 10)
+        except PlaywrightTimeoutError:
+            return
 
-            pwd_verify_panel = "xpath=//*[@id='uc-second-verify']/div/div/article/div[2]/div/div/div/input"
-            try:
-                await self.context_page.wait_for_selector(selector=pwd_verify_panel, state="visible", timeout=30 * 1000)
-                pwd_input_ele = self.context_page.locator(
-                    "xpath=//*[@id='uc-second-verify']/div/div/article/div[2]/div/div/div/input")
-                await pwd_input_ele.fill(config.dy_pwd)
-            except PlaywrightTimeoutError:  # 没有滑动验证码，直接返回
-                utils.logger.info("[DouYinLogin.check_page_display_slider] pwd verify timeout ...")
+        utils.logger.info("[DouYinLogin.check_page_display_slider] second verify, please wait for result...")
+        pwd_btn_ele = self.context_page.locator(
+            'xpath=//*[@id="uc-second-verify"]/div/div/article/div[2]/div/div[2]/div[2]/div[1]/p')
+        print(pwd_btn_ele)
+        await pwd_btn_ele.click()
 
-            verify_btn_ele = self.context_page.locator(
-                "xpath=//*[@id='uc-second-verify']/div/div/article/div[3]/div/div[2]")
-            await verify_btn_ele.click()
-            await asyncio.sleep(0.5)
+        pwd_verify_panel = 'xpath=//*[@id="uc-second-verify"]/div/div/article/div[2]/div/div/div/input'
+        try:
+            await self.context_page.wait_for_selector(selector=pwd_verify_panel, state="visible", timeout=30 * 1000)
+            pwd_input_ele = self.context_page.locator(pwd_verify_panel)
+            await pwd_input_ele.fill(config.dy_pwd)
+
+        except PlaywrightTimeoutError:  # 没有滑动验证码，直接返回
+            utils.logger.info("[DouYinLogin.check_page_display_slider] pwd verify timeout ...")
+
+        verify_btn_ele = self.context_page.locator(
+            "xpath=//*[@id='uc-second-verify']/div/div/article/div[3]/div/div[2]")
+        await verify_btn_ele.click()
+        await asyncio.sleep(0.5)
 
 
     async def login_by_cookies(self):

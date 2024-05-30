@@ -1,6 +1,6 @@
-import argparse
 import asyncio
 import sys
+import os
 
 import config
 import db
@@ -35,37 +35,33 @@ async def create_crawler_task(platform : str, login_type : str, crawler_type : s
     crawler = CrawlerFactory.create_crawler(platform=platform)
     crawler.init_config(
         platform=platform,
-        login_type=config.LOGIN_TYPE,
-        crawler_type=config.CRAWLER_TYPE
+        login_type=login_type,
+        crawler_type=crawler_type
     )
     await crawler.start()
 
 async def main():
-    # 解析命令行参数
-    parser = argparse.ArgumentParser(description='Media crawler program.')
-    parser.add_argument('--platform', type=str, help='Media platform select (xhs | dy | ks | bili | wb)',
-                        choices=["xhs", "dy", "ks", "bili", "wb"], default=config.PLATFORM)
-    parser.add_argument('--lt', type=str, help='Login type (qrcode | phone | cookie)',
-                        choices=["qrcode", "phone", "cookie"], default=config.LOGIN_TYPE)
-    parser.add_argument('--type', type=str, help='crawler type (search | detail | creator)',
-                        choices=["search", "detail", "creator"], default=config.CRAWLER_TYPE)
-    args = parser.parse_args()
-    # 初始化数据库链接
+
+    platform = os.environ.get('PLATFORM', config.PLATFORM)
+    login_type = os.environ.get('LOGIN_TYPE', config.LOGIN_TYPE)
+    crawler_type = os.environ.get('CRAWLER_TYPE', config.CRAWLER_TYPE)
+
     if config.SAVE_DATA_OPTION == "db":
         await db.init_db()
 
-    task_list = [
-        asyncio.create_task(create_crawler_task(platform, config.LOGIN_TYPE, config.CRAWLER_TYPE))
-        for platform in args.platform.split(",")
-    ]
-
-    await asyncio.wait(task_list)
+    await create_crawler_task(platform, login_type, crawler_type)
 
     if config.SAVE_DATA_OPTION == "db":
         await db.close()
 
 
 if __name__ == '__main__':
+    os.environ['PLATFORM'] = 'xhs'
+    os.environ['LOGIN_TYPE'] = 'qrcode'
+    os.environ['CRAWLER_TYPE'] = 'search'
+    os.environ['ENABLE_GET_COMMENTS'] = "0"
+    os.environ['RESOURCE_NAME'] = '第二十条'
+
     try:
         # asyncio.run(main()) #事件循环异常关闭
         loop = asyncio.new_event_loop()

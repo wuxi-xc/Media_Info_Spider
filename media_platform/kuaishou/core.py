@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 import os
 import random
 import time
@@ -66,7 +67,7 @@ class KuaishouCrawler(AbstractCrawler):
                     login_phone=httpx_proxy_format,
                     browser_context=self.browser_context,
                     context_page=self.context_page,
-                    cookie_str=config.COOKIES
+                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
                 )
                 await login_obj.begin()
                 await self.ks_client.update_cookies(browser_context=self.browser_context)
@@ -88,7 +89,13 @@ class KuaishouCrawler(AbstractCrawler):
         ks_limit_count = 20  # kuaishou limit page fixed value
         if config.CRAWLER_MAX_NOTES_COUNT < ks_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = ks_limit_count
-        for keyword in config.KEYWORDS.split(","):
+
+        resource_name_list = os.environ.get("RESOURCE_NAME", "").split(",")
+        keywords_list = os.environ.get("KEYWORDS", config.KEYWORDS).split(",")
+        combined_list = [f"{resource}{keyword}" for resource, keyword in
+                         itertools.product(resource_name_list, keywords_list)]
+        search_keyword = ",".join(combined_list)
+        for keyword in search_keyword.split(","):
             utils.logger.info(f"[KuaishouCrawler.search] Current search keyword: {keyword}")
             page = 1
             while page * ks_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
@@ -138,7 +145,11 @@ class KuaishouCrawler(AbstractCrawler):
                 await self.batch_get_video_comments(video_id_list)
 
     async def report_specified_video(self, video_list : Dict[str, str] = None) -> None:
-        """Report the specified post"""
+        """
+        Report the specified post
+        :param video_list:
+        :return:
+        """
         semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
         task_list = [
             self.report_video_task(video_id=video_detail.get("id"), reportUserId=video_detail.get("user_id"), semaphore=semaphore)
@@ -147,12 +158,17 @@ class KuaishouCrawler(AbstractCrawler):
         await asyncio.gather(*task_list)
 
     async def report_video_task(self, video_id: str, reportUserId: str, semaphore: asyncio.Semaphore) -> Optional[Dict]:
-        '''Report video task'''
+        """
+        Report video task
+        :param video_id:
+        :param reportUserId:
+        :param semaphore:
+        :return:
+        """
         async with semaphore:
             try:
                 reason = "侵犯版权，涉嫌传播盗版资源内容"
                 result = await self.ks_client.report_by_id(video_id=video_id, reportUserID=reportUserId, reason=reason)
-                print(result)
                 return result
             except KeyError as ex:
                 utils.logger.error(f"[KuaishouCrawler.report_video_task] have not fund note detail video_id:{video_id}, err: {ex}")
@@ -160,7 +176,9 @@ class KuaishouCrawler(AbstractCrawler):
 
 
     async def get_specified_videos(self):
-        """Get the information and comments of the specified post"""
+        """
+        Get the information and comments of the specified video
+        """
         semaphore = asyncio.Semaphore(config.MAX_CONCURRENCY_NUM)
         task_list = [
             self.get_video_info_task(video_id=video_id, semaphore=semaphore) for video_id in config.KS_SPECIFIED_ID_LIST
@@ -172,7 +190,12 @@ class KuaishouCrawler(AbstractCrawler):
         await self.batch_get_video_comments(config.KS_SPECIFIED_ID_LIST)
 
     async def get_video_info_task(self, video_id: str, semaphore: asyncio.Semaphore) -> Optional[Dict]:
-        """Get video detail task"""
+        """
+        Get video detail task
+        :param video_id:
+        :param semaphore:
+        :return:
+        """
         async with semaphore:
             try:
                 if config.ENABLE_FORENSICS:
@@ -193,7 +216,7 @@ class KuaishouCrawler(AbstractCrawler):
         :param video_id_list:
         :return:
         """
-        if not config.ENABLE_GET_COMMENTS:
+        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
             utils.logger.info(f"[KuaishouCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 
@@ -237,7 +260,11 @@ class KuaishouCrawler(AbstractCrawler):
 
     @staticmethod
     def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:
-        """format proxy info for playwright and httpx"""
+        """
+        format proxy info for playwright and httpx
+        :param ip_proxy_info:
+        :return:
+        """
         playwright_proxy = {
             "server": f"{ip_proxy_info.protocol}{ip_proxy_info.ip}:{ip_proxy_info.port}",
             "username": ip_proxy_info.user,
@@ -249,7 +276,11 @@ class KuaishouCrawler(AbstractCrawler):
         return playwright_proxy, httpx_proxy
 
     async def create_ks_client(self, httpx_proxy: Optional[str]) -> KuaiShouClient:
-        """Create xhs client"""
+        """
+        Create xhs client
+        :param httpx_proxy:
+        :return:
+        """
         utils.logger.info("[KuaishouCrawler.create_ks_client] Begin create kuaishou API client ...")
         cookie_str, cookie_dict = utils.convert_cookies(await self.browser_context.cookies())
         xhs_client_obj = KuaiShouClient(
@@ -273,7 +304,14 @@ class KuaishouCrawler(AbstractCrawler):
             user_agent: Optional[str],
             headless: bool = True
     ) -> BrowserContext:
-        """Launch browser and create browser context"""
+        """
+        Launch browser and create browser context
+        :param chromium:
+        :param playwright_proxy:
+        :param user_agent:
+        :param headless:
+        :return:
+        """
         utils.logger.info("[KuaishouCrawler.launch_browser] Begin create browser context ...")
         if config.SAVE_LOGIN_STATE:
             user_data_dir = os.path.join(os.getcwd(), "browser_data",
@@ -297,6 +335,8 @@ class KuaishouCrawler(AbstractCrawler):
             return browser_context
 
     async def close(self):
-        """Close browser context"""
+        """
+        Close browser context
+        """
         await self.browser_context.close()
         utils.logger.info("[KuaishouCrawler.close] Browser context closed ...")

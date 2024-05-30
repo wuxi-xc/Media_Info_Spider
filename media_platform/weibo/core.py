@@ -3,8 +3,8 @@
 # @Time    : 2024/4/23 15:41
 # @Desc    : 微博爬虫主流程代码
 
-
 import asyncio
+import itertools
 import os
 import random
 from asyncio import Task
@@ -75,7 +75,7 @@ class WeiboCrawler(AbstractCrawler):
                     login_phone="",  # your phone number
                     browser_context=self.browser_context,
                     context_page=self.context_page,
-                    cookie_str=config.COOKIES
+                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
                 )
                 await self.context_page.goto("https://passport.weibo.com/sso/signin")
                 await asyncio.sleep(1)
@@ -89,10 +89,8 @@ class WeiboCrawler(AbstractCrawler):
 
             crawler_type_var.set(self.crawler_type)
             if self.crawler_type == "search":
-                # Search for video and retrieve their comment information.
                 await self.search()
             elif self.crawler_type == "detail":
-                # Get the information and comments of the specified post
                 await self.get_specified_notes()
             else:
                 pass
@@ -107,7 +105,13 @@ class WeiboCrawler(AbstractCrawler):
         weibo_limit_count = 10  # weibo limit page fixed value
         if config.CRAWLER_MAX_NOTES_COUNT < weibo_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = weibo_limit_count
-        for keyword in config.KEYWORDS.split(","):
+
+        resource_name_list = os.environ.get("RESOURCE_NAME", "").split(",")
+        keywords_list = os.environ.get("KEYWORDS", config.KEYWORDS).split(",")
+        combined_list = [f"{resource}{keyword}" for resource, keyword in
+                         itertools.product(resource_name_list, keywords_list)]
+        search_keyword = ",".join(combined_list)
+        for keyword in search_keyword.split(","):
             utils.logger.info(f"[WeiboCrawler.search] Current search keyword: {keyword}")
             page = 1
             while page * weibo_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
@@ -196,7 +200,7 @@ class WeiboCrawler(AbstractCrawler):
         :param note_id_list:
         :return:
         """
-        if not config.ENABLE_GET_COMMENTS:
+        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
             utils.logger.info(f"[WeiboCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 
@@ -228,8 +232,29 @@ class WeiboCrawler(AbstractCrawler):
             except Exception as e:
                 utils.logger.error(f"[WeiboCrawler.get_note_comments] may be been blocked, err:{e}")
 
+    @staticmethod
+    def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:
+        """
+        format proxy info for playwright and httpx
+        :param ip_proxy_info:
+        :return:
+        """
+        playwright_proxy = {
+            "server": f"{ip_proxy_info.protocol}{ip_proxy_info.ip}:{ip_proxy_info.port}",
+            "username": ip_proxy_info.user,
+            "password": ip_proxy_info.password,
+        }
+        httpx_proxy = {
+            f"{ip_proxy_info.protocol}": f"http://{ip_proxy_info.user}:{ip_proxy_info.password}@{ip_proxy_info.ip}:{ip_proxy_info.port}"
+        }
+        return playwright_proxy, httpx_proxy
+
     async def create_weibo_client(self, httpx_proxy: Optional[str]) -> WeiboClient:
-        """Create xhs client"""
+        """
+        Create xhs client
+        :param httpx_proxy:
+        :return:
+        """
         utils.logger.info("[WeiboCrawler.create_weibo_client] Begin create weibo API client ...")
         cookie_str, cookie_dict = utils.convert_cookies(await self.browser_context.cookies())
         weibo_client_obj = WeiboClient(
@@ -246,19 +271,6 @@ class WeiboCrawler(AbstractCrawler):
         )
         return weibo_client_obj
 
-    @staticmethod
-    def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:
-        """format proxy info for playwright and httpx"""
-        playwright_proxy = {
-            "server": f"{ip_proxy_info.protocol}{ip_proxy_info.ip}:{ip_proxy_info.port}",
-            "username": ip_proxy_info.user,
-            "password": ip_proxy_info.password,
-        }
-        httpx_proxy = {
-            f"{ip_proxy_info.protocol}": f"http://{ip_proxy_info.user}:{ip_proxy_info.password}@{ip_proxy_info.ip}:{ip_proxy_info.port}"
-        }
-        return playwright_proxy, httpx_proxy
-
     async def launch_browser(
             self,
             chromium: BrowserType,
@@ -266,7 +278,14 @@ class WeiboCrawler(AbstractCrawler):
             user_agent: Optional[str],
             headless: bool = True
     ) -> BrowserContext:
-        """Launch browser and create browser context"""
+        """
+        Launch browser and create browser context
+        :param chromium:
+        :param playwright_proxy:
+        :param user_agent:
+        :param headless:
+        :return:
+        """
         utils.logger.info("[WeiboCrawler.launch_browser] Begin create browser context ...")
         if config.SAVE_LOGIN_STATE:
             user_data_dir = os.path.join(os.getcwd(), "browser_data",

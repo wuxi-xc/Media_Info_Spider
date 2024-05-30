@@ -4,6 +4,7 @@
 # @Desc    : B站爬虫
 
 import asyncio
+import itertools
 import os
 import random
 from asyncio import Task
@@ -71,7 +72,7 @@ class BilibiliCrawler(AbstractCrawler):
                     login_phone="",  # your phone number
                     browser_context=self.browser_context,
                     context_page=self.context_page,
-                    cookie_str=config.COOKIES
+                    cookie_str=os.environ.get("COOKIES", config.COOKIES)
                 )
                 await login_obj.begin()
                 await self.bili_client.update_cookies(browser_context=self.browser_context)
@@ -94,7 +95,13 @@ class BilibiliCrawler(AbstractCrawler):
         bili_limit_count =20  # bilibili limit page fixed value
         if config.CRAWLER_MAX_NOTES_COUNT < bili_limit_count:
             config.CRAWLER_MAX_NOTES_COUNT = bili_limit_count
-        for keyword in config.KEYWORDS.split(","):
+
+        resource_name_list = os.environ.get("RESOURCE_NAME", "").split(",")
+        keywords_list = os.environ.get("KEYWORDS", config.KEYWORDS).split(",")
+        combined_list = [f"{resource}{keyword}" for resource, keyword in
+                         itertools.product(resource_name_list, keywords_list)]
+        search_keyword = ",".join(combined_list)
+        for keyword in search_keyword.split(","):
             utils.logger.info(f"[BilibiliCrawler.search] Current search keyword: {keyword}")
             page = 1
             while page * bili_limit_count <= config.CRAWLER_MAX_NOTES_COUNT:
@@ -130,7 +137,7 @@ class BilibiliCrawler(AbstractCrawler):
         :param video_id_list:
         :return:
         """
-        if not config.ENABLE_GET_COMMENTS:
+        if not bool(os.environ.get("ENABLE_GET_COMMENTS", str(config.ENABLE_GET_COMMENTS))):
             utils.logger.info(f"[BilibiliCrawler.batch_get_note_comments] Crawling comment mode is not enabled")
             return
 
@@ -206,7 +213,11 @@ class BilibiliCrawler(AbstractCrawler):
                 return None
 
     async def create_bilibili_client(self, httpx_proxy: Optional[str]) -> BilibiliClient:
-        """Create xhs client"""
+        """
+        Create xhs client
+        :param httpx_proxy:
+        :return:
+        """
         utils.logger.info("[BilibiliCrawler.create_bilibili_client] Begin create bilibili API client ...")
         cookie_str, cookie_dict = utils.convert_cookies(await self.browser_context.cookies())
         bilibili_client_obj = BilibiliClient(
@@ -225,7 +236,11 @@ class BilibiliCrawler(AbstractCrawler):
 
     @staticmethod
     def format_proxy_info(ip_proxy_info: IpInfoModel) -> Tuple[Optional[Dict], Optional[Dict]]:
-        """format proxy info for playwright and httpx"""
+        """
+        format proxy info for playwright and httpx
+        :param ip_proxy_info:
+        :return:
+        """
         playwright_proxy = {
             "server": f"{ip_proxy_info.protocol}{ip_proxy_info.proxy}",
             "username": ip_proxy_info.user,
@@ -243,7 +258,14 @@ class BilibiliCrawler(AbstractCrawler):
             user_agent: Optional[str],
             headless: bool = True
     ) -> BrowserContext:
-        """Launch browser and create browser context"""
+        """
+        Launch browser and create browser context
+        :param chromium:
+        :param playwright_proxy:
+        :param user_agent:
+        :param headless:
+        :return:
+        """
         utils.logger.info("[BilibiliCrawler.launch_browser] Begin create browser context ...")
         if config.SAVE_LOGIN_STATE:
             # feat issue #14
