@@ -7,9 +7,14 @@ LABEL authors="zcp00"
 # 禁用交互模式并设置时区，防止安装过程中提示交互
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y python3.8 python3-pip && \
+    apt-get install -y python3.8 python3-pip mysql-client curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# 更换 npm 源为淘宝镜像源
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get install -y nodejs && \
+    npm config set registry https://registry.npmmirror.com
 
 # 创建工作目录
 WORKDIR /app
@@ -17,21 +22,12 @@ WORKDIR /app
 # 复制当前目录的内容到工作目录
 COPY . /app
 
-# 如果你有依赖文件 requirements.txt，解除注释以下两行并确保 requirements.txt 存在
+# 安装 Python 依赖
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# 安装 Playwright 和 Node.js
-RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g playwright && \
-    playwright install && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 如果没有requirements.txt，或者想在Dockerfile中直接安装依赖，可以使用以下命令
-#RUN pip3 install --no-cache-dir flask requests
+# 安装 Playwright
+RUN npm install -g playwright && \
+    playwright install
 
 # 创建一个用于存储数据的目录
 RUN mkdir -p /app/browser_data
@@ -40,5 +36,5 @@ RUN mkdir -p /app/img_store
 # 暴露应用运行的端口（例如5000）
 EXPOSE 5000
 
-# 如果你希望应用在容器启动时自动运行，取消以下注释并注释掉 ENTRYPOINT 上一行
+# 如果你希望应用在容器启动时自动运行，取消以下注释并注释掉 CMD 上一行
 CMD ["python3", "main.py"]
