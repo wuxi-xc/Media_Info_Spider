@@ -56,11 +56,11 @@ async def main():
 
 
 if __name__ == '__main__':
-    os.environ['PLATFORM'] = 'xhs'
-    os.environ['LOGIN_TYPE'] = 'qrcode'
-    os.environ['CRAWLER_TYPE'] = 'search'
-    # os.environ['ENABLE_GET_COMMENTS'] = 'False'
-    os.environ['RESOURCE_NAME'] = '庆余年2'
+    # os.environ['PLATFORM'] = 'douyin'
+    # os.environ['LOGIN_TYPE'] = 'qrcode'
+    # os.environ['CRAWLER_TYPE'] = 'login'
+    # # os.environ['ENABLE_GET_COMMENTS'] = 'False'
+    # os.environ['RESOURCE_NAME'] = '庆余年2'
 
     try:
         # asyncio.run(main()) #事件循环异常关闭

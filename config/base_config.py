@@ -27,7 +27,7 @@ IP_PROXY_PROVIDER_NAME = "kuaidaili"
 
 
 # 设置为True不会打开浏览器（无头浏览器），设置False会打开一个浏览器（小红书可能需要打开浏览器手动进行验证码验证）
-HEADLESS = True
+HEADLESS = False
 
 # 是否保存登录状态
 SAVE_LOGIN_STATE = True

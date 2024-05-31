@@ -253,9 +253,9 @@ class DouYinLogin(AbstractLogin):
             return
 
         utils.logger.info("[DouYinLogin.check_page_display_slider] second verify, please wait for result...")
+
         pwd_btn_ele = self.context_page.locator(
             'xpath=//*[@id="uc-second-verify"]/div/div/article/div[2]/div/div[2]/div[2]/div[1]/p')
-        print(pwd_btn_ele)
         await pwd_btn_ele.click()
 
         pwd_verify_panel = 'xpath=//*[@id="uc-second-verify"]/div/div/article/div[2]/div/div/div/input'

@@ -1,0 +1,33 @@
+# 忽略编译器生成的文件
+*.o
+*.obj
+*.so
+*.a
+*.dylib
+
+# 忽略 Git 相关的文件和目录
+.git
+.gitignore
+
+# 忽略 Python 运行过程中产生的文件和目录
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# 忽略虚拟环境目录
+venv/
+env/
+
+# 忽略配置文件
+*.ini
+*.cfg
+
+# 忽略日志文件
+*.log
+
+# 忽略浏览器数据和图片存储目录
+browser_data/
+img_store/
