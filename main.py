@@ -58,7 +58,7 @@ async def main():
 if __name__ == '__main__':
     # os.environ['PLATFORM'] = 'douyin'
     # os.environ['LOGIN_TYPE'] = 'qrcode'
-    # os.environ['CRAWLER_TYPE'] = 'login'
+    # os.environ['CRAWLER_TYPE'] = 'search'
     # # os.environ['ENABLE_GET_COMMENTS'] = 'False'
     # os.environ['RESOURCE_NAME'] = '庆余年2'
 
