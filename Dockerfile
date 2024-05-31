@@ -20,6 +20,16 @@ COPY . /app
 # 如果你有依赖文件 requirements.txt，解除注释以下两行并确保 requirements.txt 存在
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+# 安装 Playwright 和 Node.js
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g playwright && \
+    playwright install && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # 如果没有requirements.txt，或者想在Dockerfile中直接安装依赖，可以使用以下命令
 #RUN pip3 install --no-cache-dir flask requests
 
