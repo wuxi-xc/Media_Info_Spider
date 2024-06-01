@@ -28,7 +28,7 @@ class XiaoHongShuLogin(AbstractLogin):
         self.login_phone = login_phone
         self.cookie_str = cookie_str
 
-    @retry(stop=stop_after_attempt(120), wait=wait_fixed(1), retry=retry_if_result(lambda value: value is False))
+    @retry(stop=stop_after_attempt(20), wait=wait_fixed(6), retry=retry_if_result(lambda value: value is False))
     async def check_login_state(self, no_logged_in_session: str) -> bool:
         if "请通过验证" in await self.context_page.content():
             utils.logger.info("[XiaoHongShuLogin.check_login_state] 登录过程中出现验证码，请等待验证")

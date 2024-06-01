@@ -42,7 +42,7 @@ USER_DATA_DIR = "%s_user_data_dir"
 CRAWLER_MAX_NOTES_COUNT = 40
 
 # 并发爬虫数量控制
-MAX_CONCURRENCY_NUM = 4
+MAX_CONCURRENCY_NUM = 3
 
 # 是否开启爬评论模式, 默认不开启爬评论
 ENABLE_GET_COMMENTS = 0

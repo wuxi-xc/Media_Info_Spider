@@ -23,11 +23,12 @@ WORKDIR /app
 COPY . /app
 
 # 安装 Python 依赖
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 # 安装 Playwright
-RUN npm install -g playwright && \
-    playwright install
+#RUN npm install -g playwright && \
+#    playwright install
+RUN playwright install
 
 # 创建一个用于存储数据的目录
 RUN mkdir -p /app/browser_data
@@ -36,5 +37,8 @@ RUN mkdir -p /app/img_store
 # 暴露应用运行的端口（例如5000）
 EXPOSE 5000
 
+# 设置容器启动时运行的命令，保持容器运行
+ENTRYPOINT ["top", "-b"]
+
 # 如果你希望应用在容器启动时自动运行，取消以下注释并注释掉 CMD 上一行
-CMD ["python3", "main.py"]
+#CMD ["python3", "main.py"]
