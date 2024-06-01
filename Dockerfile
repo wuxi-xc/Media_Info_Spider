@@ -8,6 +8,8 @@ LABEL authors="zcp00"
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y python3.8 python3-pip mysql-client curl && \
+    apt-get install -y libglib2.0-0 && \
+    apt-get install -y libgl1-mesa-glx && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -26,9 +28,7 @@ COPY . /app
 RUN pip3 install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 # 安装 Playwright
-#RUN npm install -g playwright && \
-#    playwright install
-RUN playwright install
+RUN playwright install --with=msedge
 
 # 创建一个用于存储数据的目录
 RUN mkdir -p /app/browser_data
